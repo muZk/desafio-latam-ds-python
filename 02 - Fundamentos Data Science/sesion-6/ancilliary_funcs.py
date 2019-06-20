@@ -64,9 +64,3 @@ def gen_dotplot(df, dataframe, plot_var, plot_by, global_stat=False, statistic='
     plt.axvline(value, color='blue')
     if global_stat:
         plt.axvline(global_value, color='tomato', linestyle='--')
-
-
-def function(df, plot_var, plot_by, global_stat, ):
-    # promedio z-score para plot_by
-    # linea vertical: media z-score toda la muestra
-    pass
