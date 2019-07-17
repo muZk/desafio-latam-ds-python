@@ -73,6 +73,21 @@ def binarize_columns(df, columns):
 
 
 def dummierize_columns(data, columns):
+    """Convert categorical variable into dummy variables
+
+    Parameters
+    ----------
+    df : DataFrame
+        DataFrame you want to convert
+    columns : list(str)
+        Name of the columns you want to convert
+
+    Returns
+    -------
+    DataFrame
+        a new DataFrame with the new dummy variables
+    """
+
     df = data.copy()
     new_columns = []
 
