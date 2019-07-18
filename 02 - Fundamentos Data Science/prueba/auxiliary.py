@@ -1,3 +1,7 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 def binarize(df, column):
@@ -107,3 +111,46 @@ def dummierize_columns(data, columns):
         df = binarize(df, col_name)
 
     return df.drop(columns=new_columns).drop(columns=columns)
+
+
+def is_discrete(col):
+    return not(col.dtype == np.int64 and len(col.value_counts()) > 5)
+
+
+def describe_columns(df):
+    """Prints information about each column of the given dataframe.
+
+    It uses .describe() for numerical columns and .value_counts() for discrete columns.
+
+    Parameters
+    ----------
+    df : DataFrame
+        DataFrame to describe
+    """
+
+    for i in df:
+        col = df[i]
+
+        if is_discrete(col):
+            print(col.value_counts(normalize=True), "\n")
+        else:
+            print(col.describe(), "\n")
+
+
+def plot_columns_behaviour(df):
+    for n, i in enumerate(df):
+        plt.subplot(1, 2, n % 2 + 1)
+
+        col = df[i]
+
+        if is_discrete(col):
+            sns.countplot(y=df[i])
+            plt.title(i)
+            plt.xlabel("")
+        else:
+            sns.distplot(df[i])
+            plt.title(i)
+            plt.xlabel("")
+
+        plt.tight_layout()
+        plt.show()
