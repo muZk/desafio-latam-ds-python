@@ -112,10 +112,17 @@ def dummierize_columns(data, columns):
 
     return df.drop(columns=new_columns).drop(columns=columns)
 
+def is_numeric(col):
+    return (col.dtype == np.int64 or col.dtype == np.float64) and len(col.value_counts()) > 5
 
 def is_discrete(col):
-    return not(col.dtype == np.int64 and len(col.value_counts()) > 5)
+    return not is_numeric(col)
 
+def is_binary(col):
+    return len(col.value_counts()) == 2
+
+def is_nominal(col):
+    return len(col.value_counts()) == 5
 
 def describe_columns(df):
     """Prints information about each column of the given dataframe.
@@ -136,21 +143,65 @@ def describe_columns(df):
         else:
             print(col.describe(), "\n")
 
+def humanize(col_name):
+    t = {
+        'school' : 'Escuela del estudiante.',
+        'sex' : 'Sexo del estudiante',
+        'age' : 'Edad del estudiante',
+        'address' : 'Ubicación de la casa del estudiante',
+        'famsize' : 'Tamaño de la familia',
+        'Pstatus' : 'Estado cohabitacional de los padres',
+        'Medu' : 'Nivel educacional de la madre',
+        'Fedu' : 'Nivel educacional del padre',
+        'Mjob' : 'Ocupación de la madre',
+        'Fjob' : 'Ocupación del padre',
+        'reason' : 'Razón para escoger la escuela',
+        'guardian' : 'Apoderado del estudiante',
+        'traveltime' : 'Tiempo de viaje entre hogar y colegio',
+        'studytime' : 'Horas semanales dedicadas al estudio',
+        'failures' : 'Número de clases reprobadas',
+        'schoolsup' : 'Apoyo educacional del colegio',
+        'famsup' : 'Apoyo educacional familiar',
+        'paid' : 'Clases particulares pagadas',
+        'activities' : 'Actividades extracurriculares',
+        'nursery' : 'Asistió a guardería infantil',
+        'higher' : 'Desea proseguir estudios superiores',
+        'internet' : 'Acceso a internet desde el hogar',
+        'romantic' : 'Relación romántica',
+        'famrel' : 'Calidad de las relaciones familiares',
+        'freetime' : 'Tiempo libre fuera del colegio',
+        'goout' : 'Salidas con amigos',
+        'Dalc' : 'Consumo de alcohol en día de semana',
+        'Walc' : 'Consumo de alcohol en fines de semana',
+        'health' : 'Estado de salud actual',
+        'absences' : 'Cantidad de ausencias escolares',
+        'G1' : 'Notas durante el primer semestre',
+        'G2' : 'Notas durante el segundo semestre',
+        'G3' : 'Promedio final',
+    }
+    return t[col_name]
 
-def plot_columns_behaviour(df):
-    for n, i in enumerate(df):
-        plt.subplot(1, 2, n % 2 + 1)
+def plot_columns_behaviour(df, kind='countplot'):
+    cols = list(df.columns)
+    n_cols = 3
+    n_rows = np.ceil(len(cols) / n_cols)
+    plt.figure(figsize=(n_cols * 5, 5 * n_rows))
 
-        col = df[i]
+    for n, col_name in enumerate(cols):
+        plt.subplot(n_rows, n_cols, n + 1)
 
-        if is_discrete(col):
-            sns.countplot(y=df[i])
-            plt.title(i)
+        col = df[col_name]
+
+        if kind == 'countplot':
+            sns.countplot(y=df[col_name])
+            plt.title(humanize(col_name))
             plt.xlabel("")
         else:
-            sns.distplot(df[i])
-            plt.title(i)
+            sns.distplot(df[col_name], rug=True)
+            plt.title(humanize(col_name))
             plt.xlabel("")
-
+            plt.axvline(df[col_name].mean(), color='tomato', linestyle='--', label='mean')
+            plt.axvline(df[col_name].median(), color='green', linestyle='--', label='median')
+            plt.legend()
         plt.tight_layout()
-        plt.show()
+
