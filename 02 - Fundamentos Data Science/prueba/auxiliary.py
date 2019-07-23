@@ -263,7 +263,7 @@ def run_hip_test(df, col_name, group_by):
 
     group_1 = df[df[group_by] == values[1]][col_name].dropna()
     group_0 = df[df[group_by] == values[0]][col_name].dropna()
-    t, pval = stats.ttest_ind(group_1, group_0)
+    t, pval = stats.ttest_ind(group_1, group_0, equal_var=False)
     return abs(t) > 1.96 and pval < 0.05
 
 
