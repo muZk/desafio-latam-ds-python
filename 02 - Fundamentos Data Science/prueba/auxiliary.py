@@ -305,7 +305,7 @@ def graph_hist(df, col_name, group_by):
     plt.show()
 
 
-def plot_main_correlations(df, figsize=(15, 5)):
+def plot_main_correlations(df, threshold = 0.4):
     """Plots main correlations between columns of the given dataframe.
 
     Parameters
@@ -315,6 +315,23 @@ def plot_main_correlations(df, figsize=(15, 5)):
     """
     plt.figure(figsize=(15, 5))
     M = df.corr()
-    best_corr = M[((M > 0.4) & (M < 1) | (M < -0.4))
+    best_corr = M[((M > threshold) & (M < 1) | (M < -threshold))
                   ].dropna(axis=0, how='all').dropna(axis=1, how='all')
     sns.heatmap(best_corr, annot=True)
+
+    
+def plot_worst_correlations(df, threshold = 0.4):
+    """Plots main correlations between columns of the given dataframe.
+
+    Parameters
+    ----------
+    df : DataFrame
+        DataFrame with numeric columns used to compute correlation matrix
+    """
+    plt.figure(figsize=(15, 5))
+    M = df.corr()
+    best_corr = M[((M < threshold) & (M > -threshold))
+                  ].dropna(axis=0, how='all').dropna(axis=1, how='all')
+    sns.heatmap(best_corr, annot=True)
+
+    return best_corr
