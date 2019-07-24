@@ -114,6 +114,26 @@ def dummierize_columns(data, columns):
     return df.drop(columns=new_columns).drop(columns=columns)
 
 
+def get_dummies(data, columns=None):
+    df = data.dropna().infer_objects()
+
+    if columns is None:
+        data_to_encode = df.select_dtypes(include=["object", "category"])
+    else:
+        data_to_encode = df[columns]
+
+    for col_name, col in data_to_encode.iteritems():
+        counts = data_to_encode[col_name].value_counts(sort=True)
+
+        for value in list(counts.index[1:]):
+            new_column = "{}_{}".format(col_name, value)
+            df[new_column] = 0
+            df.loc[col == value, new_column] = 1
+
+    df.columns = df.columns.str.replace('-', '')
+    return df.drop(columns=data_to_encode.columns)
+
+
 def is_binary(serie):
     """ Returns true when the given serie is binary.
 
@@ -305,7 +325,7 @@ def graph_hist(df, col_name, group_by):
     plt.show()
 
 
-def plot_main_correlations(df, threshold = 0.4):
+def plot_main_correlations(df, threshold=0.4):
     """Plots main correlations between columns of the given dataframe.
 
     Parameters
@@ -319,8 +339,8 @@ def plot_main_correlations(df, threshold = 0.4):
                   ].dropna(axis=0, how='all').dropna(axis=1, how='all')
     sns.heatmap(best_corr, annot=True)
 
-    
-def plot_worst_correlations(df, threshold = 0.4):
+
+def plot_worst_correlations(df, threshold=0.4):
     """Plots main correlations between columns of the given dataframe.
 
     Parameters
