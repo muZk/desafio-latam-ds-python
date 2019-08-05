@@ -2,151 +2,46 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import statsmodels.formula.api as smf
 from scipy import stats
 
 
-def binarize(df, column):
-    """Adds a binarized column to the given dataframe using the minority as the true value
+def get_dummies(data, columns=None):
+    """Convert categorical variable into dummy/indicator variables
 
     Parameters
     ----------
-    df : DataFrame
-        DataFrame you want to binarize
-    column : str
-        Name of the column you want to binarize
-
-    Raises
-    ------
-    NotImplementedError
-        Throws this error if the column is not binary
+    data : DataFrame
+    columns : list-like, default None
+        Column names in the DataFrame to be encoded. If columns is None then all the columns with object or category dtype will be converted.
 
     Returns
     -------
-    DataFrame
-        a new DataFrame with the new binarized column
+    dummies : DataFrame
     """
 
-    copy = df.copy()
+    df = data.dropna().infer_objects()
 
-    counts = df[column].value_counts()
+    if columns is None:
+        data_to_encode = df.select_dtypes(include=["object", "category"])
+    else:
+        data_to_encode = df[columns]
 
-    if counts.count() != 2:
-        raise NotImplementedError(
-            "Only columns with two possible values are supported")
+    for col_name, col in data_to_encode.iteritems():
+        counts = data_to_encode[col_name].value_counts(sort=True)
 
-    minority = counts.index[0]
-    majority = counts.index[1]
-
-    if counts[minority] > counts[majority]:
-        old_majority = minority
-        minority = majority
-        majority = old_majority
-
-    new_column = column + '_' + minority
-    copy[new_column] = None
-    copy.loc[df[column] == minority, new_column] = 1
-    copy.loc[df[column] == majority, new_column] = 0
-
-    return copy
-
-
-def binarize_columns(df, columns):
-    """Adds binarized columns to the given dataframe
-    The given columns are removed from the new dataframe
-
-    Parameters
-    ----------
-    df : DataFrame
-        DataFrame you want to binarize
-    columns : list(str)
-        Name of the columns you want to binarize
-
-    Returns
-    -------
-    DataFrame
-        a new DataFrame with the new binarized columns
-    """
-
-    copy = df.copy()
-
-    for col_name in columns:
-        copy = binarize(copy, col_name)
-
-    copy = copy.drop(columns=columns)
-
-    return copy
-
-
-def dummierize_columns(data, columns):
-    """Convert categorical variable into dummy variables
-
-    Parameters
-    ----------
-    df : DataFrame
-        DataFrame you want to convert
-    columns : list(str)
-        Name of the columns you want to convert
-
-    Returns
-    -------
-    DataFrame
-        a new DataFrame with the new dummy variables
-    """
-
-    df = data.copy()
-    new_columns = []
-
-    for col_name, col in df[columns].iteritems():
-        counts = col.value_counts()
-        values = list(counts.index)
-
-        for value in values:
+        for value in list(counts.index[1:]):
             new_column = "{}_{}".format(col_name, value)
-            df[new_column] = None
-            df.loc[col == value, new_column] = 'yes'
-            df.loc[col.isin(
-                list(filter(lambda x: x != value, values))), new_column] = 'no'
-            new_columns.append(new_column)
+            df[new_column] = 0
+            df.loc[col == value, new_column] = 1
 
-    for col_name in new_columns:
-        df = binarize(df, col_name)
-
-    return df.drop(columns=new_columns).drop(columns=columns)
-
-
-def is_binary(serie):
-    """ Returns true when the given serie is binary.
-
-    Parameters
-    ----------
-    serie : Series
-
-    Returns
-    -------
-    Boolean
-        True when serie is binary.
-    """
-    return len(serie.value_counts()) == 2
-
-
-def is_nominal(serie):
-    """ Returns true when the given serie is nominal.
-
-    Parameters
-    ----------
-    serie : Series
-
-    Returns
-    -------
-    Boolean
-        True when serie is nominal
-    """
-
-    values_count = serie.dropna().unique().size
-    return values_count > 2 and values_count < 10
+    df.columns = df.columns.str.replace('-', '')
+    return df.drop(columns=data_to_encode.columns)
 
 
 def humanize(col_name):
+    """Returns a string that represent the column name in spanish"""
+
     t1 = {
         'school': 'Escuela del estudiante.',
         'sex': 'Sexo del estudiante',
@@ -208,6 +103,15 @@ def humanize(col_name):
 
 
 def plot_columns_behaviour(df, kind='countplot'):
+    """Plots the columns of the given dataframe using a countplot or a distplot
+
+    Parameters
+    ----------
+    df : DataFrame
+    kind : str
+        countplot or distplot
+    """
+
     cols = list(df.columns)
     n_cols = 3
     n_rows = np.ceil(len(cols) / n_cols)
@@ -263,7 +167,7 @@ def run_hip_test(df, col_name, group_by):
 
     group_1 = df[df[group_by] == values[1]][col_name].dropna()
     group_0 = df[df[group_by] == values[0]][col_name].dropna()
-    t, pval = stats.ttest_ind(group_1, group_0)
+    t, pval = stats.ttest_ind(group_1, group_0, equal_var=False)
     return abs(t) > 1.96 and pval < 0.05
 
 
@@ -305,7 +209,7 @@ def graph_hist(df, col_name, group_by):
     plt.show()
 
 
-def plot_main_correlations(df, figsize=(15, 5)):
+def plot_main_correlations(df, threshold=0.4):
     """Plots main correlations between columns of the given dataframe.
 
     Parameters
@@ -315,6 +219,61 @@ def plot_main_correlations(df, figsize=(15, 5)):
     """
     plt.figure(figsize=(15, 5))
     M = df.corr()
-    best_corr = M[((M > 0.4) & (M < 1) | (M < -0.4))
+    best_corr = M[((M > threshold) & (M < 1) | (M < -threshold))
                   ].dropna(axis=0, how='all').dropna(axis=1, how='all')
     sns.heatmap(best_corr, annot=True)
+
+
+def plot_worst_correlations(df, threshold=0.4):
+    """Plots main correlations between columns of the given dataframe.
+
+    Parameters
+    ----------
+    df : DataFrame
+        DataFrame with numeric columns used to compute correlation matrix
+    """
+    plt.figure(figsize=(15, 5))
+    M = df.corr()
+    best_corr = M[((M < threshold) & (M > -threshold))
+                  ].dropna(axis=0, how='all').dropna(axis=1, how='all')
+    sns.heatmap(best_corr, annot=True)
+
+    return best_corr
+
+
+def build_model(df, model, target, *banned_columns):
+    """Builds a regression model to predict target value excluding the banned columns.
+
+    Parameters
+    ----------
+    df : DataFrame
+        Model data
+    model : string
+        "ols" (linear regression) or "logit" (logistic regression).
+    target : string
+        Name of the column in the dataframe which has the target data to be predicted
+    banned_columns : array
+        The rest of arguments are going to be the columns you want to exclude from the model.
+    """
+
+    regressors = [
+        item for item in df.columns if item not in banned_columns and item != target]
+
+    model_expression = '{} ~ {}'.format(target, ' + '.join(regressors))
+
+    if model == 'ols':
+        return smf.ols(model_expression, df)
+
+    return smf.logit(model_expression, df)
+
+
+def not_significant_pvalues(model):
+    """Returns the not significant pvalues in model (95% significance)"""
+    pvalues = model.pvalues[1:]
+    return pvalues[pvalues > 0.025]
+
+
+def significant_pvalues(model):
+    """Returns the significant pvalues in model (95% significance)"""
+    pvalues = model.pvalues[1:]
+    return pvalues[pvalues <= 0.025]
