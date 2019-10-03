@@ -5,8 +5,7 @@ WHERE anio = 2018;
 
 SELECT titulo_album, nacionalidad
 FROM Album
-LEFT JOIN Artista ON artista = nombre_artista 
-WHERE anio = 2018;
+INNER JOIN Artista ON artista = nombre_artista;
 
 SELECT numero_del_track, titulo_cancion, titulo_album, anio, Cancion.artista
 FROM Cancion

@@ -8,8 +8,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.gridspec import GridSpec
 from matplotlib.lines import Line2D
-import mappings
-import preproc_nyc_sqf as tuskas
+from data import mappings
+from data import preproc_nyc_sqf as tuskas
 
 from sklearn.metrics import classification_report, f1_score, accuracy_score
 
