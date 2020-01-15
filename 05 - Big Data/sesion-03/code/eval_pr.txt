@@ -1,0 +1,43 @@
+Predict 1
+delivery_zone
+IV      0.427295
+I       0.437008
+VII     0.449029
+VIII    0.474235
+V       0.479769
+III     0.482201
+II      0.522523
+VI      0.626108
+Name: predict, dtype: float64
+Predict 2
+deliverer_id
+3     0.266055
+9     0.289474
+2     0.316832
+36    0.336957
+38    0.342105
+        ...   
+25    0.633663
+22    0.637931
+68    0.640449
+64    0.669903
+67    0.716981
+Name: predict, Length: 100, dtype: float64
+Predict 3
+menu
+Mexican     0.450867
+Japanese    0.476248
+Italian     0.478602
+Asian       0.481868
+Indian      0.493159
+French      0.545783
+Name: predict, dtype: float64
+Predict 4
+subscription_type
+Trimestral    0.454807
+Prepaid       0.463372
+Yearly        0.483071
+Semestral     0.494267
+Free          0.501560
+Monthly       0.531941
+Name: predict, dtype: float64

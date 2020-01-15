@@ -1,0 +1,1 @@
+select * from artists limit 10;

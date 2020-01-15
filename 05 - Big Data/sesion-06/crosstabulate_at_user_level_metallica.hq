@@ -1,0 +1,6 @@
+select country, age, gender, count(*) as counter
+from user_profile
+left join artists ON concat('"', artists.user_mboxsha1, '"') = user_profile.user_mboxsha1
+where artists.artist_name = "metallica"
+group by country, age, gender
+order by counter desc;
